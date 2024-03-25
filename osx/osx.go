@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func Move(sourcePath, destPath string) error {
@@ -12,6 +13,11 @@ func Move(sourcePath, destPath string) error {
 		return fmt.Errorf("couldn't open source file: %v", err)
 	}
 	defer inputFile.Close()
+
+	fInfo, err := os.Stat(destPath)
+	if err != nil && fInfo.IsDir() {
+		destPath = filepath.Join(destPath, inputFile.Name())
+	}
 
 	outputFile, err := os.Create(destPath)
 	if err != nil {
