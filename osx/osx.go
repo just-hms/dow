@@ -5,11 +5,21 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/adrg/xdg"
 )
 
-var DownloadPath = xdg.UserDirs.Download
+func DownloadFolderPath() (string, error) {
+	s := os.Getenv("DOWNLOAD_FOLDER_PATH")
+	if s != "" {
+		return s, nil
+	}
+
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	return filepath.Join(homeDir, "Downloads"), nil
+}
 
 func Move(sourcePath, destPath string) error {
 	inputFile, err := os.Open(sourcePath)

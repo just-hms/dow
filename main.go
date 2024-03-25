@@ -53,7 +53,12 @@ func main() {
 		destPath = os.Args[1]
 	}
 
-	files, err := os.ReadDir(osx.DownloadPath)
+	downloadPath, err := osx.DownloadFolderPath()
+	if err != nil {
+		log.Fatalf("Error getting the dowload path %v", err)
+	}
+
+	files, err := os.ReadDir(downloadPath)
 	if err != nil {
 		log.Fatalf("Error reading the download folder %v", err)
 	}
@@ -82,7 +87,7 @@ func main() {
 		fmt.Println()
 	}
 
-	sourcePath := filepath.Join(osx.DownloadPath, lastFile.Name())
+	sourcePath := filepath.Join(downloadPath, lastFile.Name())
 
 	err = osx.Move(sourcePath, destPath)
 	if err != nil {
