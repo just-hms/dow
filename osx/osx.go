@@ -16,7 +16,7 @@ func Move(sourcePath, destPath string) error {
 
 	fInfo, err := os.Stat(destPath)
 	if err == nil && fInfo.IsDir() {
-		destPath = filepath.Join(destPath, inputFile.Name())
+		destPath = filepath.Join(destPath, filepath.Base(inputFile.Name()))
 	}
 
 	outputFile, err := os.Create(destPath)
