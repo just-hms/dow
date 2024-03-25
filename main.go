@@ -79,6 +79,7 @@ func main() {
 			fmt.Println("No")
 			return
 		}
+		fmt.Println()
 	}
 
 	sourcePath := filepath.Join(osx.DownloadPath, lastFile.Name())
