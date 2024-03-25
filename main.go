@@ -48,8 +48,13 @@ func findLatestFile(files []fs.DirEntry) (os.FileInfo, error) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
+	if len(os.Args) != 1 && len(os.Args) != 2 {
 		log.Fatal("Usage: dow <destination path>")
+	}
+
+	destPath := "."
+	if len(os.Args) == 2 {
+		destPath = os.Args[1]
 	}
 
 	downloadsPath := getDownloadsPath()
@@ -82,7 +87,6 @@ func main() {
 	}
 
 	sourcePath := filepath.Join(downloadsPath, lastFile.Name())
-	destPath := os.Args[1]
 
 	err = osx.Move(sourcePath, destPath)
 	if err != nil {
