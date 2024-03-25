@@ -69,13 +69,14 @@ func main() {
 
 	if time.Since(lastFile.ModTime()) > maxElapsedBeforeAsking {
 		fmt.Printf(
-			"%q is older than %v. Proceed? [y]/N ",
+			"%q is older than %v. Proceed? (y/N) ",
 			lastFile.Name(),
 			maxElapsedBeforeAsking,
 		)
 
-		resp := iox.ReadChar(os.Stdin)
-		if resp != 'y' && resp != '\n' {
+		resp, _ := iox.Read()
+		if resp != 'y' {
+			fmt.Println("No")
 			return
 		}
 	}
