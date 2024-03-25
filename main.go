@@ -15,10 +15,6 @@ import (
 
 const maxElapsedBeforeAsking = time.Minute
 
-func getDownloadsPath() string {
-	return filepath.Join(os.Getenv("HOME"), "Downloads")
-}
-
 func findLatestFile(files []fs.DirEntry) (os.FileInfo, error) {
 	var latestFile os.FileInfo
 
@@ -57,9 +53,7 @@ func main() {
 		destPath = os.Args[1]
 	}
 
-	downloadsPath := getDownloadsPath()
-
-	files, err := os.ReadDir(downloadsPath)
+	files, err := os.ReadDir(osx.DownloadPath)
 	if err != nil {
 		log.Fatalf("Error reading the download folder %v", err)
 	}
@@ -86,7 +80,7 @@ func main() {
 		}
 	}
 
-	sourcePath := filepath.Join(downloadsPath, lastFile.Name())
+	sourcePath := filepath.Join(osx.DownloadPath, lastFile.Name())
 
 	err = osx.Move(sourcePath, destPath)
 	if err != nil {

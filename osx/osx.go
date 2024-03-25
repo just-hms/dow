@@ -5,7 +5,11 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/adrg/xdg"
 )
+
+var DownloadPath = xdg.UserDirs.Download
 
 func Move(sourcePath, destPath string) error {
 	inputFile, err := os.Open(sourcePath)
