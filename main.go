@@ -1,9 +1,7 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,34 +12,6 @@ import (
 )
 
 const maxElapsedBeforeAsking = time.Minute
-
-func findLatestFile(files []fs.DirEntry) (os.FileInfo, error) {
-	var latestFile os.FileInfo
-
-	for _, file := range files {
-		fInfo, err := file.Info()
-
-		// Skip files that were deleted since listing
-		if os.IsNotExist(err) {
-			continue
-		}
-
-		// Return on unexpected error
-		if err != nil {
-			return nil, err
-		}
-
-		if latestFile == nil || fInfo.ModTime().After(latestFile.ModTime()) {
-			latestFile = fInfo
-		}
-	}
-
-	if latestFile == nil {
-		return nil, errors.New("no file found")
-	}
-
-	return latestFile, nil
-}
 
 func main() {
 	if len(os.Args) != 1 && len(os.Args) != 2 {
@@ -63,7 +33,7 @@ func main() {
 		log.Fatalf("Error reading the download folder %v", err)
 	}
 
-	lastFile, err := findLatestFile(files)
+	lastFile, err := osx.LatestFile(files)
 	if err != nil {
 		log.Fatalf("Failed to find latest file: %v", err)
 	}
