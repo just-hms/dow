@@ -1,6 +1,6 @@
 # dow
 
-> moves the last downloaded file in the curren (or the specified) folder
+move the last downloaded file in the current (or the specified) folder
 
 usage:
 
@@ -11,5 +11,5 @@ dow <destination path>
 ## Install
 
 ```shell
-go install github.com/just-hms/dow
+go install github.com/just-hms/dow@latest
 ```
