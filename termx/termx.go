@@ -47,8 +47,6 @@ func (s *spinner) Spin() error {
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-	fmt.Print(s.text)
-
 	frames := []rune{'|', '/', '-', '\\'}
 	delay := 100 * time.Millisecond
 
@@ -60,12 +58,9 @@ func (s *spinner) Spin() error {
 		for i := 0; ; i = (i + 1) % len(frames) {
 			select {
 			case <-ctx.Done():
-				for range s.text {
-					fmt.Print("\r")
-				}
 				return
 			default:
-				fmt.Printf("\r%c", frames[i])
+				fmt.Printf("%s %c", s.text, frames[i])
 				time.Sleep(delay)
 				fmt.Print("\r")
 			}

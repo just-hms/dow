@@ -77,6 +77,6 @@ func main() {
 
 	err = osx.Move(sourcePath, destPath)
 	if err != nil {
-		log.Fatalf("Failed to move %v", err)
+		log.Fatalf("Failed to %v", err)
 	}
 }
