@@ -61,10 +61,7 @@ func main() {
 		sourcePath = filepath.Join(downloadPath, lastFile.Name())
 
 		s := termx.NewSpinner("Downloading")
-		err = s.Spin()
-		if err != nil {
-			log.Fatal(err)
-		}
+		s.Spin()
 		waited := false
 		for osx.IsLocked(sourcePath) {
 			waited = true

@@ -37,15 +37,9 @@ type spinner struct {
 }
 
 // Spin displays a spinner animation until the context is canceled.
-func (s *spinner) Spin() error {
+func (s *spinner) Spin() {
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
-
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return err
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
 	frames := []rune{'|', '/', '-', '\\'}
 	delay := 100 * time.Millisecond
@@ -66,8 +60,6 @@ func (s *spinner) Spin() error {
 			}
 		}
 	}()
-
-	return nil
 }
 
 func (s *spinner) Stop() {
