@@ -1,14 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/just-hms/dow/iox"
 	"github.com/just-hms/dow/osx"
+	"github.com/just-hms/dow/termx"
 )
 
 const maxElapsedBeforeAsking = time.Minute
@@ -42,6 +43,24 @@ func main() {
 		log.Fatalf("The download directory is empty")
 	}
 
+	if lastFile.IsDir() {
+		log.Fatalf("The most recent file %q is a directory", lastFile.Name())
+	}
+
+	sourcePath := filepath.Join(downloadPath, lastFile.Name())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	err = termx.Spin(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for osx.IsLocked(sourcePath) {
+		time.Sleep(200 * time.Millisecond)
+	}
+
+	cancel()
+
 	if time.Since(lastFile.ModTime()) > maxElapsedBeforeAsking {
 		fmt.Printf(
 			"%q is older than %v. Proceed? (y/N) ",
@@ -49,15 +68,13 @@ func main() {
 			maxElapsedBeforeAsking,
 		)
 
-		resp, _ := iox.Read()
+		resp, _ := termx.Read()
 		if resp != 'y' {
 			fmt.Println("No")
 			return
 		}
 		fmt.Println()
 	}
-
-	sourcePath := filepath.Join(downloadPath, lastFile.Name())
 
 	err = osx.Move(sourcePath, destPath)
 	if err != nil {
