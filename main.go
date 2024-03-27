@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -49,8 +48,8 @@ func main() {
 
 	sourcePath := filepath.Join(downloadPath, lastFile.Name())
 
-	ctx, cancel := context.WithCancel(context.Background())
-	err = termx.Spin(ctx)
+	s := termx.NewSpinner("Downloading")
+	err = s.Spin()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +58,7 @@ func main() {
 		time.Sleep(200 * time.Millisecond)
 	}
 
-	cancel()
+	s.Stop()
 
 	if time.Since(lastFile.ModTime()) > maxElapsedBeforeAsking {
 		fmt.Printf(
