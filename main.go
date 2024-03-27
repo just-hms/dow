@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -12,6 +13,21 @@ import (
 )
 
 const maxElapsedBeforeAsking = time.Minute
+
+func getLastFile(path string) (fs.FileInfo, error) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	lastFile, err := osx.LatestFile(files)
+	if err != nil {
+		return nil, err
+	}
+	if lastFile.IsDir() {
+		return nil, err
+	}
+	return lastFile, nil
+}
 
 func main() {
 	if len(os.Args) != 1 && len(os.Args) != 2 {
@@ -28,37 +44,37 @@ func main() {
 		log.Fatalf("Error getting the dowload path %v", err)
 	}
 
-	files, err := os.ReadDir(downloadPath)
-	if err != nil {
-		log.Fatalf("Error reading the download folder %v", err)
+	var (
+		lastFile   fs.FileInfo
+		sourcePath string
+	)
+
+	// TODO: this is basically a wait for folder
+	// https://superuser.com/questions/860064/how-can-i-find-all-files-open-within-a-given-directory#:~:text=lsof%20has%20switches,open%20files%20recursively)
+
+	for {
+		lastFile, err = getLastFile(downloadPath)
+		if err != nil {
+			log.Fatalf("Error getting the last file %v", err)
+		}
+
+		sourcePath = filepath.Join(downloadPath, lastFile.Name())
+
+		s := termx.NewSpinner("Downloading")
+		err = s.Spin()
+		if err != nil {
+			log.Fatal(err)
+		}
+		waited := false
+		for osx.IsLocked(sourcePath) {
+			waited = true
+			time.Sleep(200 * time.Millisecond)
+		}
+		s.Stop()
+		if !waited {
+			break
+		}
 	}
-
-	lastFile, err := osx.LatestFile(files)
-	if err != nil {
-		log.Fatalf("Failed to find latest file: %v", err)
-	}
-
-	if lastFile == nil {
-		log.Fatalf("The download directory is empty")
-	}
-
-	if lastFile.IsDir() {
-		log.Fatalf("The most recent file %q is a directory", lastFile.Name())
-	}
-
-	sourcePath := filepath.Join(downloadPath, lastFile.Name())
-
-	s := termx.NewSpinner("Downloading")
-	err = s.Spin()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for osx.IsLocked(sourcePath) {
-		time.Sleep(200 * time.Millisecond)
-	}
-
-	s.Stop()
 
 	if time.Since(lastFile.ModTime()) > maxElapsedBeforeAsking {
 		fmt.Printf(
