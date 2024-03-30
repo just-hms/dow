@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -24,7 +25,7 @@ func getLastFile(path string) (fs.FileInfo, error) {
 		return nil, err
 	}
 	if lastFile.IsDir() {
-		return nil, err
+		return nil, errors.New("cannot move a directory")
 	}
 	return lastFile, nil
 }
