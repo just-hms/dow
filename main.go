@@ -51,8 +51,10 @@ func main() {
 	)
 
 	// TODO: this is basically a wait for folder
-	// https://superuser.com/questions/860064/how-can-i-find-all-files-open-within-a-given-directory#:~:text=lsof%20has%20switches,open%20files%20recursively)
+	// - https://superuser.com/questions/860064/how-can-i-find-all-files-open-within-a-given-directory#:~:text=lsof%20has%20switches,open%20files%20recursively)
+	// check special names like unconfirmed...
 
+	spinner := termx.NewSpin()
 	for {
 		lastFile, err = getLastFile(downloadPath)
 		if err != nil {
@@ -61,18 +63,22 @@ func main() {
 
 		sourcePath = filepath.Join(downloadPath, lastFile.Name())
 
-		s := termx.NewSpinner("Downloading")
-		s.Spin()
 		waited := false
 		for osx.IsLocked(sourcePath) {
+			lastFile, err = os.Stat(sourcePath)
+			if err != nil {
+				log.Fatalf("Error getting the last file %v", err)
+			}
 			waited = true
-			time.Sleep(200 * time.Millisecond)
+			spinner.Spin("Downloading " + osx.Size(lastFile))
+			time.Sleep(100 * time.Millisecond)
 		}
-		s.Stop()
 		if !waited {
 			break
 		}
+		time.Sleep(400 * time.Millisecond)
 	}
+	spinner.Flush()
 
 	if time.Since(lastFile.ModTime()) > maxElapsedBeforeAsking {
 		fmt.Printf(

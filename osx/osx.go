@@ -2,9 +2,12 @@ package osx
 
 import (
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/just-hms/dow/bytex"
 )
 
 func DownloadFolderPath() (string, error) {
@@ -56,4 +59,18 @@ func LatestFile(files []fs.DirEntry) (os.FileInfo, error) {
 	}
 
 	return latestFile, nil
+}
+
+func Size(f fs.FileInfo) string {
+	s := float64(f.Size())
+	if s > bytex.GB {
+		return fmt.Sprintf("%.2f GB", s/bytex.GB)
+	}
+	if s > bytex.MB {
+		return fmt.Sprintf("%.2f MB", s/bytex.MB)
+	}
+	if s > bytex.KB {
+		return fmt.Sprintf("%.2f KB", s/bytex.KB)
+	}
+	return fmt.Sprintf("%.2f B", s)
 }

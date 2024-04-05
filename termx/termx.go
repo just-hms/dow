@@ -1,11 +1,8 @@
 package termx
 
 import (
-	"context"
 	"fmt"
 	"os"
-	"sync"
-	"time"
 
 	"golang.org/x/term"
 )
@@ -26,43 +23,22 @@ func Read() (rune, error) {
 	return rune(b[0]), nil
 }
 
-func NewSpinner(text string) *spinner {
-	return &spinner{text: text}
+type spinner struct {
+	count int
 }
 
-type spinner struct {
-	cancel context.CancelFunc
-	text   string
-	wg     sync.WaitGroup
+func NewSpin() *spinner {
+	return &spinner{}
 }
+
+var frames = []string{"⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽", "⣾"}
 
 // Spin displays a spinner animation until the context is canceled.
-func (s *spinner) Spin() {
-	ctx, cancel := context.WithCancel(context.Background())
-	s.cancel = cancel
-
-	frames := []rune{'|', '/', '-', '\\'}
-	delay := 100 * time.Millisecond
-
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		time.Sleep(delay * 5)
-
-		for i := 0; ; i = (i + 1) % len(frames) {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				fmt.Printf("%s %c", s.text, frames[i])
-				time.Sleep(delay)
-				fmt.Print("\r")
-			}
-		}
-	}()
+func (s *spinner) Spin(text string) {
+	fmt.Printf("\r%s %s  ", text, frames[s.count])
+	s.count = (s.count + 1) % len(frames)
 }
 
-func (s *spinner) Stop() {
-	s.cancel()
-	s.wg.Wait()
+func (s *spinner) Flush() {
+	fmt.Print("\r")
 }
