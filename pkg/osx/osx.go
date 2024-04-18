@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/just-hms/dow/bytex"
+	"github.com/just-hms/dow/pkg/bytex"
 )
 
 func DownloadFolderPath() (string, error) {
-	s := os.Getenv("DOWNLOAD_FOLDER_PATH")
+	s := os.Getenv("DOW_DOWNLOAD_PATH")
 	if s != "" {
 		return s, nil
 	}
