@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/just-hms/dow/pkg/logx"
 	"github.com/just-hms/dow/pkg/osx"
 	"github.com/just-hms/dow/pkg/termx"
 	"github.com/spf13/cobra"
@@ -35,6 +36,36 @@ func getLastFile(path string) (fs.FileInfo, error) {
 	return lastFile, nil
 }
 
+func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, string, error) {
+	spinner := termx.NewSpin(logger)
+	defer spinner.Flush()
+
+	for {
+		lastFile, err := getLastFile(downloadPath)
+		if err != nil {
+			return nil, "", err
+		}
+
+		sourcePath := filepath.Join(downloadPath, lastFile.Name())
+
+		waited := false
+		for osx.IsLocked(sourcePath) {
+			lastFile, err = os.Stat(sourcePath)
+			if err != nil {
+				return nil, "", err
+			}
+			waited = true
+			spinner.Spin("Downloading " + osx.Size(lastFile))
+			time.Sleep(100 * time.Millisecond)
+		}
+		if !waited {
+			return lastFile, sourcePath, nil
+		}
+
+		time.Sleep(400 * time.Millisecond)
+	}
+}
+
 var mvCmd = &cobra.Command{
 	Use:          "dow",
 	Short:        "move the last downloaded file in the current (or the specified) folder",
@@ -52,43 +83,15 @@ var mvCmd = &cobra.Command{
 			return fmt.Errorf("failed to get the dowload path: %v", err)
 		}
 
-		var (
-			lastFile   fs.FileInfo
-			sourcePath string
-		)
+		logger := logx.Logger{}
 
-		// TODO: this is basically a wait for folder
-		// - https://superuser.com/questions/860064/how-can-i-find-all-files-open-within-a-given-directory#:~:text=lsof%20has%20switches,open%20files%20recursively)
-		// check special names like unconfirmed...
-
-		spinner := termx.NewSpin()
-		for {
-			lastFile, err = getLastFile(downloadPath)
-			if err != nil {
-				return fmt.Errorf("failed to get latest file: %v", err)
-			}
-
-			sourcePath = filepath.Join(downloadPath, lastFile.Name())
-
-			waited := false
-			for osx.IsLocked(sourcePath) {
-				lastFile, err = os.Stat(sourcePath)
-				if err != nil {
-					return fmt.Errorf("failed to get latest file: %v", err)
-				}
-				waited = true
-				spinner.Spin("Downloading " + osx.Size(lastFile))
-				time.Sleep(100 * time.Millisecond)
-			}
-			if !waited {
-				break
-			}
-			time.Sleep(400 * time.Millisecond)
+		lastFile, sourcePath, err := waitForDownload(logger, downloadPath)
+		if err != nil {
+			return fmt.Errorf("failed to get the last downloaded file: %v", err)
 		}
-		spinner.Flush()
 
 		if time.Since(lastFile.ModTime()) > maxElapsedBeforeAsking && !yesFlag {
-			fmt.Printf(
+			logger.Printf(
 				"%q is older than %v. Proceed? (y/N) ",
 				lastFile.Name(),
 				maxElapsedBeforeAsking,
@@ -96,7 +99,7 @@ var mvCmd = &cobra.Command{
 
 			resp, _ := termx.Read()
 			if resp != 'y' {
-				fmt.Println("No")
+				logger.Println("No")
 				return nil
 			}
 			fmt.Println()

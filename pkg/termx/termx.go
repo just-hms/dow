@@ -1,7 +1,6 @@
 package termx
 
 import (
-	"fmt"
 	"os"
 
 	"golang.org/x/term"
@@ -25,20 +24,27 @@ func Read() (rune, error) {
 
 type spinner struct {
 	count int
+	l     Logger
 }
 
-func NewSpin() *spinner {
-	return &spinner{}
+type Logger interface {
+	Printf(format string, v ...any)
+}
+
+func NewSpin(logger Logger) *spinner {
+	return &spinner{
+		l: logger,
+	}
 }
 
 var frames = []string{"⣷", "⣯", "⣟", "⡿", "⢿", "⣻", "⣽", "⣾"}
 
 // Spin displays a spinner animation until the context is canceled.
 func (s *spinner) Spin(text string) {
-	fmt.Printf("\r%s %s  ", text, frames[s.count])
+	s.l.Printf("\r%s %s  ", text, frames[s.count])
 	s.count = (s.count + 1) % len(frames)
 }
 
 func (s *spinner) Flush() {
-	fmt.Print("\r")
+	s.l.Printf("\r")
 }
