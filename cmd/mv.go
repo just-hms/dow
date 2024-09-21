@@ -36,33 +36,43 @@ func getLastFile(path string) (fs.FileInfo, error) {
 	return lastFile, nil
 }
 
-func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, string, error) {
+func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, error) {
 	spinner := termx.NewSpin(logger)
 	defer spinner.Flush()
 
 	for {
 		lastFile, err := getLastFile(downloadPath)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 
 		sourcePath := filepath.Join(downloadPath, lastFile.Name())
+		lastFile, err = os.Stat(sourcePath)
+		if err != nil {
+			return nil, err
+		}
 
 		waited := false
 		for osx.IsLocked(sourcePath) {
-			lastFile, err = os.Stat(sourcePath)
-			if err != nil {
-				return nil, "", err
-			}
 			waited = true
 			spinner.Spin("Downloading " + osx.Size(lastFile))
 			time.Sleep(100 * time.Millisecond)
 		}
-		if !waited {
-			return lastFile, sourcePath, nil
+
+		if waited {
+			continue
 		}
 
 		time.Sleep(400 * time.Millisecond)
+
+		checkLastFile, err := getLastFile(downloadPath)
+		if err != nil {
+			return nil, err
+		}
+		if checkLastFile.Name() != lastFile.Name() {
+			continue
+		}
+		return checkLastFile, nil
 	}
 }
 
@@ -73,9 +83,9 @@ var mvCmd = &cobra.Command{
 	SilenceUsage: false,
 	Args:         cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		destPath := "."
+		destFolder := "."
 		if len(args) == 1 {
-			destPath = args[0]
+			destFolder = args[0]
 		}
 
 		downloadPath, err := osx.DownloadFolderPath()
@@ -85,7 +95,7 @@ var mvCmd = &cobra.Command{
 
 		logger := logx.Logger{}
 
-		lastFile, sourcePath, err := waitForDownload(logger, downloadPath)
+		lastFile, err := waitForDownload(logger, downloadPath)
 		if err != nil {
 			return fmt.Errorf("failed to get the last downloaded file: %v", err)
 		}
@@ -105,12 +115,14 @@ var mvCmd = &cobra.Command{
 			fmt.Println()
 		}
 
-		err = osx.Move(sourcePath, destPath)
+		sourcePath := filepath.Join(downloadPath, lastFile.Name())
+
+		err = osx.Move(sourcePath, destFolder)
 		if err != nil {
 			return fmt.Errorf("failed to %v", err)
 		}
 		if verboseFlag {
-			fmt.Println(filepath.Join(destPath, filepath.Base(sourcePath)))
+			fmt.Println(filepath.Join(destFolder, lastFile.Name()))
 		}
 		return nil
 	},
