@@ -47,13 +47,13 @@ func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, erro
 		}
 
 		sourcePath := filepath.Join(downloadPath, lastFile.Name())
-		lastFile, err = os.Stat(sourcePath)
-		if err != nil {
-			return nil, err
-		}
 
 		waited := false
 		for osx.IsLocked(sourcePath) {
+			lastFile, err = os.Stat(sourcePath)
+			if err != nil {
+				return nil, err
+			}
 			waited = true
 			spinner.Spin("Downloading " + osx.Size(lastFile))
 			time.Sleep(100 * time.Millisecond)
