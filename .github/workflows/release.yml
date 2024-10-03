@@ -17,40 +17,22 @@ jobs:
         fetch-depth: 2
 
     - name: Check if the Version changed
-      id: version
+      id: version-changed
       run:
         CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
-        echo $CURRENT_VERSION
-        echo "::set-output name=current_version::$CURRENT_VERSION"
-
         PREVIOUS_VERSION=$(git show ${{ github.event.before }}:internal/version.go | grep -oP 'Version\s*=\s*"\K[^\"]+')
-        echo "::set-output name=previous_version::$PREVIOUS_VERSION"
-        echo "old file----"
-        git show ${{ github.event.before }}:internal/version.go
-        echo "old file----"
-        echo $PREVIOUS_VERSION
-    - name: Create release
-      if: steps.version.outputs.current_version != steps.version.outputs.previous_version
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        CURRENT_VERSION=${{ steps.current-version.outputs.current_version }}
         
-        # Create a new tag
-        git tag -a $CURRENT_VERSION -m "Release $CURRENT_VERSION"
-        git push origin $CURRENT_VERSION
+        if [ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]; then
+          exit 1
+        fi
 
-        # Create a new release on GitHub
-        curl -s -X POST https://api.github.com/repos/${{ github.repository }}/releases \
-          -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Content-Type: application/json" \
-          -d @- <<EOF
-        {
-          "tag_name": "$CURRENT_VERSION",
-          "target_commitish": "${{ github.sha }}",
-          "name": "$CURRENT_VERSION",
-          "body": "Automated release for version $CURRENT_VERSION.",
-          "draft": false,
-          "prerelease": false
-        }
-        EOF
+    - name: Create a new release
+      if: steps.version-changed.outcome == 'success'
+      env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.html_url }}
+      run: |
+        CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
+        gh release create $CURRENT_VERSION \
+          --title "$CURRENT_VERSION" \
+          --notes "New release version $CURRENT_VERSION"
