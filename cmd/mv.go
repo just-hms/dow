@@ -77,9 +77,9 @@ func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, erro
 }
 
 var mvCmd = &cobra.Command{
-	Use:          "dow",
+	Use:          "move",
 	Short:        "move the last downloaded file in the current (or the specified) folder",
-	Long:         ``,
+	Hidden:       true,
 	SilenceUsage: false,
 	Args:         cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -129,6 +129,8 @@ var mvCmd = &cobra.Command{
 }
 
 func init() {
+	rootCmd.AddCommand(mvCmd)
+
 	mvCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "show the name of the moved file")
 	mvCmd.Flags().BoolVarP(&yesFlag, "yes", "y", false, "force dow to move the latest file even if it's old")
 }
