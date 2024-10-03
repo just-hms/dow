@@ -13,24 +13,40 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
 
     - name: Check if the Version changed
+      id: version
       run:
-        if [ "$(sed -n 's/.*Version = "\(.*\)"/\1/p' ./internal/version.go)" = "$(git show HEAD~1:./internal/version.go | sed -n 's/.*Version = "\(.*\)"/\1/p')" ]; then
-          exit 0
-        fi
-    
-    - name: Create tag
-      run: |
-        VERSION=$(sed -n 's/.*Version = "\(.*\)"/\1/p' ./internal/version.go)
-        git tag -a "$VERSION" -m "Release version $VERSION"
-        git push origin "$VERSION"
+        CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
+        echo "::set-output name=current_version::$CURRENT_VERSION"
+
+        PREVIOUS_VERSION=$(git show ${{ github.event.before }}:internal/version.go | grep -oP 'Version\s*=\s*"\K[^\"]+')
+        echo "::set-output name=previous_version::$PREVIOUS_VERSION"
 
     - name: Create release
-      uses: actions/create-release@v1
-      with:
-        tag_name: "v${{ steps.create_tag.outputs.VERSION }}"
-        release_name: "Release ${{ steps.create_tag.outputs.VERSION }}"
-        body: "Release version ${{ steps.create_tag.outputs.VERSION }}."
-        draft: false
-        prerelease: false
+      if: steps.version.outputs.current_version != steps.version.outputs.previous_version
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        CURRENT_VERSION=${{ steps.current-version.outputs.current_version }}
+        
+        # Create a new tag
+        git tag -a $CURRENT_VERSION -m "Release $CURRENT_VERSION"
+        git push origin $CURRENT_VERSION
+
+        # Create a new release on GitHub
+        curl -s -X POST https://api.github.com/repos/${{ github.repository }}/releases \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Content-Type: application/json" \
+          -d @- <<EOF
+        {
+          "tag_name": "$CURRENT_VERSION",
+          "target_commitish": "${{ github.sha }}",
+          "name": "$CURRENT_VERSION",
+          "body": "Automated release for version $CURRENT_VERSION.",
+          "draft": false,
+          "prerelease": false
+        }
+        EOF
