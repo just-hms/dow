@@ -18,10 +18,10 @@ jobs:
 
     - name: Check if the Version changed
       id: version-changed
-      run:
+      run: |
         CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' ./internal/version.go)
         PREVIOUS_VERSION=$(git show ${{ github.event.before }}:internal/version.go | grep -oP 'Version\s*=\s*"\K[^\"]+')
-        
+
         if [ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]; then
           exit 1
         fi
@@ -30,7 +30,6 @@ jobs:
       if: steps.version-changed.outcome == 'success'
       env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ISSUE: ${{ github.event.issue.html_url }}
       run: |
         CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
         gh release create $CURRENT_VERSION \
