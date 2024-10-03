@@ -1,3 +1,3 @@
 package internal
 
-var Version = "dev"
+var Version = "test"

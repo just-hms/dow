@@ -1,9 +1,9 @@
 name: release
 
 on:
-  release:
-    types:
-      - created
+  push:
+    branches:
+      - main
 
 jobs:
 
@@ -14,8 +14,23 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Build executables
+    - name: Check if the Version changed
+      run:
+        if [ "$(sed -n 's/.*Version = "\(.*\)"/\1/p' ./internal/version.go)" = "$(git show HEAD~1:./internal/version.go | sed -n 's/.*Version = "\(.*\)"/\1/p')" ]; then
+          exit 0
+        fi
+    
+    - name: Create tag
       run: |
-        export VERSION=${{ github.ref_name }}
-        sed -i 's/Version = "dev"/Version = "'"$VERSION"'"/' internal/version.go
+        VERSION=$(sed -n 's/.*Version = "\(.*\)"/\1/p' ./internal/version.go)
+        git tag -a "$VERSION" -m "Release version $VERSION"
+        git push origin "$VERSION"
 
+    - name: Create release
+      uses: actions/create-release@v1
+      with:
+        tag_name: "v${{ steps.create_tag.outputs.VERSION }}"
+        release_name: "Release ${{ steps.create_tag.outputs.VERSION }}"
+        body: "Release version ${{ steps.create_tag.outputs.VERSION }}."
+        draft: false
+        prerelease: false
