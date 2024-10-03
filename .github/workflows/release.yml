@@ -7,7 +7,7 @@ on:
 
 jobs:
 
-  build:
+  release:
     runs-on: ubuntu-latest
     steps:
     
@@ -20,11 +20,15 @@ jobs:
       id: version
       run:
         CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
+        echo $CURRENT_VERSION
         echo "::set-output name=current_version::$CURRENT_VERSION"
 
         PREVIOUS_VERSION=$(git show ${{ github.event.before }}:internal/version.go | grep -oP 'Version\s*=\s*"\K[^\"]+')
         echo "::set-output name=previous_version::$PREVIOUS_VERSION"
-
+        echo "old file----"
+        git show ${{ github.event.before }}:internal/version.go
+        echo "old file----"
+        echo $PREVIOUS_VERSION
     - name: Create release
       if: steps.version.outputs.current_version != steps.version.outputs.previous_version
       env:
