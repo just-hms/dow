@@ -1,4 +1,4 @@
-name: release
+name: Release
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
     - name: Check if the Version changed
       id: version-changed
       run:
-        CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
+        CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' ./internal/version.go)
         PREVIOUS_VERSION=$(git show ${{ github.event.before }}:internal/version.go | grep -oP 'Version\s*=\s*"\K[^\"]+')
         
         if [ "$CURRENT_VERSION" == "$PREVIOUS_VERSION" ]; then
