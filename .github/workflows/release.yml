@@ -35,6 +35,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         CURRENT_VERSION=$(grep -oP 'Version\s*=\s*"\K[^\"]+' internal/version.go)
+
         gh release create $CURRENT_VERSION \
           --title "$CURRENT_VERSION" \
           --notes "New release version $CURRENT_VERSION"
