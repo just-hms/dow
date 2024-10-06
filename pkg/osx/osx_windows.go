@@ -2,6 +2,7 @@ package osx
 
 import (
 	"fmt"
+	"log"
 	"syscall"
 	"unsafe"
 )
@@ -72,6 +73,12 @@ func fileInfo(path string) (*FILE_PROCESS_IDS_USING_FILE_INFORMATION, error) {
 	return &info, nil
 }
 func IsLocked(path string) bool {
-	info, _ := fileInfo(path)
+	info, err := fileInfo(path)
+	if err != nil {
+		return false
+	}
+
+	log.Println(info.ProcessIdList)
+
 	return len(info.ProcessIdList) > 1
 }
