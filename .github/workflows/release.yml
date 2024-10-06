@@ -5,7 +5,6 @@ on:
     branches:
       - main
 
-# todo check this better, maybe add two jobs
 permissions: write-all
 
 jobs:
