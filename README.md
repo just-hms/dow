@@ -9,9 +9,19 @@ Dow is a command-line tool designed to move the most recent download to a new lo
 usage:
 
 ```shell
-dow
-# or
-dow destination/path
+mv the last downloaded file in the current (or the specified) folder
+
+Usage:
+  dow [flags]
+
+Examples:
+  dow
+  dow -v | xargs -rd '\n' code
+
+Flags:
+  -h, --help      help for dow
+  -v, --verbose   show the name of the moved file
+  -y, --yes       force dow to move the latest file even if it's old
 ```
 
 ## Install
