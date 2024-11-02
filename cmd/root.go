@@ -77,12 +77,14 @@ func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, erro
 }
 
 var rootCmd = &cobra.Command{
-	Use:          "dow",
-	Short:        "mv the last downloaded file in the current (or the specified) folder",
+	Use:          `dow`,
+	Short:        `mv the last downloaded file in the current (or the specified) folder`,
 	Hidden:       true,
 	SilenceUsage: false,
+	Example:      "  dow\n  dow -v | xargs -rd '\n' code",
 	Args:         cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		cmd.SilenceUsage = true
 		destFolder := "."
 		if len(args) == 1 {
 			destFolder = args[0]
@@ -112,7 +114,7 @@ var rootCmd = &cobra.Command{
 				logger.Println("No")
 				return nil
 			}
-			fmt.Println()
+			logger.Println()
 		}
 
 		sourcePath := filepath.Join(downloadPath, lastFile.Name())
