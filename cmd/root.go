@@ -81,7 +81,7 @@ var rootCmd = &cobra.Command{
 	Short:        `mv the last downloaded file in the current (or the specified) folder`,
 	Hidden:       true,
 	SilenceUsage: false,
-	Example:      "  dow\n  dow -v | xargs -rd '\\n' code",
+	Example:      "  dow\n  dow /path/to/target\n  dow -v | xargs -rd '\\n' code",
 	Args:         cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cmd.SilenceUsage = true
