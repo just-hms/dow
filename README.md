@@ -16,6 +16,7 @@ Usage:
 
 Examples:
   dow
+  dow /path/to/destination
   dow -v | xargs -rd '\n' code
 
 Flags:
