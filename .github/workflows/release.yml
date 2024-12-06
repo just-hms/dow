@@ -2,7 +2,9 @@
 name: goreleaser
 
 on:
-  release
+  push:
+    tags:
+      - '*'
 
 permissions:
   contents: write
