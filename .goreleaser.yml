@@ -6,11 +6,11 @@ builds:
       - linux
       - windows
       - darwin
-  - goarch:
+    goarch:
       - amd64
       - arm64
-  - main: .
-  - binary: dow
+    main: .
+    binary: dow
 
 
 archives:
