@@ -1,0 +1,19 @@
+project_name: dow
+builds:
+  - goos:
+      - linux
+      - windows
+      - darwin
+  - goarch:
+      - amd64
+      - arm64
+  - main: .
+  - binary: dow
+
+
+archives:
+  - format: tar.gz 
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
