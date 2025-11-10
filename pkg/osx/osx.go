@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/just-hms/dow/pkg/bytex"
 )
@@ -33,29 +34,45 @@ func Move(sourcePath, destPath string) error {
 	return os.Rename(sourcePath, destPath)
 }
 
+func getCreationTime(info fs.FileInfo) (t syscall.Timespec, err error) {
+	statT, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return t, errors.New("failed to get raw syscall.Stat_t")
+	}
+	return statT.Ctimespec, nil // Birth time is stored in Ctimespec on Darwin
+}
+
+// LatestFile returns the latest created file (ignoring dot-files)
 func LatestFile(files []fs.DirEntry) (os.FileInfo, error) {
 	var latestFile os.FileInfo
+	var latestTime syscall.Timespec
 
 	for _, file := range files {
-		fInfo, err := file.Info()
-
-		// Skip files that were deleted since listing
-		if os.IsNotExist(err) {
+		if file.IsDir() || file.Name()[0] == '.' {
 			continue
 		}
 
-		// Return on unexpected error
+		fInfo, err := file.Info()
+		if os.IsNotExist(err) {
+			continue
+		}
 		if err != nil {
 			return nil, err
 		}
 
-		if latestFile == nil || fInfo.ModTime().After(latestFile.ModTime()) {
+		ctime, err := getCreationTime(fInfo)
+		if err != nil {
+			continue
+		}
+
+		if latestFile == nil || ctime.Sec > latestTime.Sec || (ctime.Sec == latestTime.Sec && ctime.Nsec > latestTime.Nsec) {
 			latestFile = fInfo
+			latestTime = ctime
 		}
 	}
 
 	if latestFile == nil {
-		return nil, errors.New("no file found")
+		return nil, errors.New("no valid files found")
 	}
 
 	return latestFile, nil

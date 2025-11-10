@@ -6,8 +6,10 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
+	"github.com/just-hms/dow/pkg/extractor"
 	"github.com/just-hms/dow/pkg/logx"
 	"github.com/just-hms/dow/pkg/osx"
 	"github.com/just-hms/dow/pkg/termx"
@@ -17,6 +19,7 @@ import (
 var (
 	verboseFlag bool
 	yesFlag     bool
+	extractFlag bool
 )
 
 const maxElapsedBeforeAsking = time.Minute
@@ -76,6 +79,26 @@ func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, erro
 	}
 }
 
+func extractFile(filePath, destFolder string, logger logx.Logger) error {
+	ext := strings.ToLower(filepath.Ext(filePath))
+
+	switch ext {
+	case ".zip":
+		return extractor.ExtractZip(filePath, destFolder)
+	case ".gz":
+		if strings.HasSuffix(strings.ToLower(filePath), ".tar.gz") ||
+			strings.HasSuffix(strings.ToLower(filePath), ".tgz") {
+			return extractor.ExtractTarGz(filePath, destFolder)
+		}
+		return extractor.ExtractGzip(filePath, destFolder)
+	case ".tar":
+		return extractor.ExtractTar(filePath, destFolder)
+	default:
+		logger.Printf("Skipping extraction: unsupported file type %q", ext)
+		return nil
+	}
+}
+
 var rootCmd = &cobra.Command{
 	Use:          `dow`,
 	Short:        `mv the last downloaded file in the current (or the specified) folder`,
@@ -119,6 +142,16 @@ var rootCmd = &cobra.Command{
 
 		sourcePath := filepath.Join(downloadPath, lastFile.Name())
 
+		if extractFlag {
+			if err := extractFile(sourcePath, destFolder, logger); err != nil {
+				return fmt.Errorf("failed to extract file: %v", err)
+			}
+			if err := os.Remove(sourcePath); err != nil {
+				return fmt.Errorf("failed to remove archive %q: %v", sourcePath, err)
+			}
+			return nil
+		}
+
 		err = osx.Move(sourcePath, destFolder)
 		if err != nil {
 			return fmt.Errorf("failed to %v", err)
@@ -141,4 +174,5 @@ func init() {
 
 	rootCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "show the name of the moved file")
 	rootCmd.Flags().BoolVarP(&yesFlag, "yes", "y", false, "force dow to move the latest file even if it's old")
+	rootCmd.Flags().BoolVarP(&extractFlag, "extract", "x", false, "move and extract the last downloaded archive")
 }
