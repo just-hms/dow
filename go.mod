@@ -1,6 +1,6 @@
 module github.com/just-hms/dow
 
-go 1.22
+go 1.26
 
 require golang.org/x/term v0.20.0
 
