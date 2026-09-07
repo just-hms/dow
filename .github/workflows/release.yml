@@ -4,7 +4,7 @@ name: goreleaser
 on:
   push:
     tags:
-      - '*'
+      - "*"
 
 permissions:
   contents: write
@@ -22,11 +22,16 @@ jobs:
         with:
           go-version: stable
 
+      - name: Check README help output
+        run: |
+          help="$(go run . -h)"
+          grep -Fq "$help" README.md
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
-          version: 'latest'
+          version: "latest"
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

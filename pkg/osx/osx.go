@@ -6,7 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"syscall"
+	"time"
 
 	"github.com/just-hms/dow/pkg/bytex"
 )
@@ -34,18 +34,10 @@ func Move(sourcePath, destPath string) error {
 	return os.Rename(sourcePath, destPath)
 }
 
-func getCreationTime(info fs.FileInfo) (t syscall.Timespec, err error) {
-	statT, ok := info.Sys().(*syscall.Stat_t)
-	if !ok {
-		return t, errors.New("failed to get raw syscall.Stat_t")
-	}
-	return statT.Ctimespec, nil // Birth time is stored in Ctimespec on Darwin
-}
-
-// LatestFile returns the latest created file (ignoring dot-files)
+// LatestFile returns the latest created file, ignoring dot-files
 func LatestFile(files []fs.DirEntry) (os.FileInfo, error) {
 	var latestFile os.FileInfo
-	var latestTime syscall.Timespec
+	var latestTime time.Time
 
 	for _, file := range files {
 		if file.IsDir() || file.Name()[0] == '.' {
@@ -65,7 +57,7 @@ func LatestFile(files []fs.DirEntry) (os.FileInfo, error) {
 			continue
 		}
 
-		if latestFile == nil || ctime.Sec > latestTime.Sec || (ctime.Sec == latestTime.Sec && ctime.Nsec > latestTime.Nsec) {
+		if latestFile == nil || ctime.After(latestTime) {
 			latestFile = fInfo
 			latestTime = ctime
 		}

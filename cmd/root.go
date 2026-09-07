@@ -52,7 +52,7 @@ func waitForDownload(logger logx.Logger, downloadPath string) (fs.FileInfo, erro
 		sourcePath := filepath.Join(downloadPath, lastFile.Name())
 
 		waited := false
-		for osx.IsLocked(sourcePath) {
+		for osx.IsLocked(sourcePath) || osx.IsInProgressDownload(sourcePath) {
 			lastFile, err = os.Stat(sourcePath)
 			if err != nil {
 				return nil, err
@@ -101,7 +101,7 @@ func extractFile(filePath, destFolder string, logger logx.Logger) error {
 
 var rootCmd = &cobra.Command{
 	Use:          `dow`,
-	Short:        `mv the last downloaded file in the current (or the specified) folder`,
+	Short:        `mv the last downloaded file in the current (or the specified) destination`,
 	Hidden:       true,
 	SilenceUsage: false,
 	Example:      "  dow\n  dow /path/to/target\n  dow -v | xargs -rd '\\n' code",

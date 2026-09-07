@@ -8,8 +8,8 @@ Dow is a command-line tool designed to move the most recent download to a new lo
 
 usage:
 
-```shell
-mv the last downloaded file in the current (or the specified) folder
+```sh
+mv the last downloaded file in the current (or the specified) destination
 
 Usage:
   dow [flags]
@@ -20,6 +20,7 @@ Examples:
   dow -v | xargs -rd '\n' code
 
 Flags:
+  -x, --extract   move and extract the last downloaded archive
   -h, --help      help for dow
   -v, --verbose   show the name of the moved file
   -y, --yes       force dow to move the latest file even if it's old
@@ -27,7 +28,7 @@ Flags:
 
 ## Install
 
-```shell
+```sh
 go install github.com/just-hms/dow@latest
 ```
 
@@ -35,6 +36,6 @@ go install github.com/just-hms/dow@latest
 
 Your download folder is not in `~/Downloads`? Set up the `DOW_DOWNLOAD_PATH` environment variable to explicitly define the path to your downloads folder. This ensures Dow knows exactly where to look.
 
-```shell
+```sh
 export DOW_DOWNLOAD_PATH=path/to/your/download-folder
 ```
